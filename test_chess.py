@@ -1,6 +1,7 @@
 from gameManager import GameManager
 from piece import Piece
 from gameState import GameState
+from player import Player
 from pytest import raises
 import pygame
 
@@ -21,17 +22,38 @@ def test_GameManager_initialization_invalid_windowTooSmall():
     with raises(ValueError):
         GameManager(screen, 900, colors)
 
+
+def test_GameManager_pos_to_position():
+    screen = pygame.display.set_mode((900, 900))
+    colors = ("white", "gray")
+    game = GameManager(screen, 900, colors)
+    assert game.pos_to_tile((90, 10)) == (0, 0)
+    assert game.pos_to_tile((162, 160)) == (1, 1)
+
+
+def test_GameManager_find_pieces_of_color():
+    screen = pygame.display.set_mode((900, 900))
+    colors = ("white", "gray")
+    game = GameManager(screen, 900, colors)
+    assert len(game.find_all_pieces_of_color("w")) == 16
+    assert len(game.find_all_pieces_of_color("b")) == 16
+
+
 # Piece Tests
 
 
 def test_Piece_initialization_valid():
-    piece = Piece("bk")
+    piece = Piece("bk", (1, 5))
     assert piece.name == "bk"
 
 
 def test_Piece_initialization_invalid():
     with raises(ValueError):
-        Piece("")
+        Piece("", (1, 1))
+    with raises(ValueError):
+        Piece("bk", (1, 8))
+    with raises(ValueError):
+        Piece("bl", (1, 2))
 
 # GameState Tests
 
@@ -40,3 +62,19 @@ def test_GameState_initialization():
     game_state = GameState()
     assert game_state.board[0][0].name == "br"
     assert game_state.board[3][1] is None
+
+# Player Tests
+
+
+def test_Player_initialization_valid():
+    plr = Player("w", [i for i in range(16)])
+    assert plr.color == "w"
+    assert plr.pieces[2] == 2
+    assert plr.score == 0
+
+
+def test_Player_initialization_invalid():
+    with raises(ValueError):
+        Player("asd", [i for i in range(16)])
+    with raises(ValueError):
+        Player("w", [i for i in range(2)])
