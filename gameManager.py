@@ -24,6 +24,7 @@ class GameManager():
         self.lastly_moved_piece = None
         self.currently_valid_moves = []
         self.an_passant_tiles = {}
+        self.castle_tiles = {}
         self.currently_defended_tiles = []
 
     def update(self, events):
@@ -51,6 +52,9 @@ class GameManager():
                     if clicked_tile in self.an_passant_tiles:
                         self.take_a_piece(self.an_passant_tiles[clicked_tile])
                         self.an_passant_tiles = {}
+                    # check if move was a castle
+                    if clicked_tile in self.castle_tiles:
+                        self.move_piece(self.pos_to_piece(self.castle_tiles[clicked_tile][1]), self.castle_tiles[clicked_tile][0])
                     # switch players
                     self.current_player = self.plr_white if self.current_player.color == "b" else self.plr_black
                     self.current_opponent = self.plr_black if self.current_player.color == "b" else self.plr_white
@@ -258,6 +262,38 @@ class GameManager():
         add_if_valid_move(1, 0)
         add_if_valid_move(1, 1)
 
+        offset = 1 if self.current_player.color == "w" else -1
+
+        # short castle white
+        short_castle_condition = True
+        for i in range(1, 3):
+            if not self.check_if_valid_position((pos[0], pos[1] + i*offset)) or self.check_if_place_occupied((pos[0], pos[1] + i*offset)):
+                short_castle_condition = False
+                break
+        r_pos = (pos[0], pos[1] + 3*offset)
+        if not self.check_if_valid_position(r_pos) or not self.check_if_place_occupied(r_pos) or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
+                or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
+            short_castle_condition = False
+
+        if short_castle_condition:
+            valid_moves.append((pos[0], pos[1] + 2*offset))
+            self.castle_tiles[(pos[0], pos[1] + 2*offset)] = [(pos[0], pos[1] + 1*offset), (pos[0], pos[1] + 3*offset)]
+
+        # long castle white
+        long_castle_condition = True
+        for i in range(1, 4):
+            if not self.check_if_valid_position((pos[0], pos[1] - i*offset)) or self.check_if_place_occupied((pos[0], pos[1] - i*offset)):
+                long_castle_condition = False
+                break
+        r_pos = (pos[0], pos[1] - 4*offset)
+        if not self.check_if_valid_position(r_pos) or not self.check_if_place_occupied(r_pos) or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
+                or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
+            long_castle_condition = False
+
+        if long_castle_condition:
+            valid_moves.append((pos[0], pos[1] - 2*offset))
+            self.castle_tiles[(pos[0], pos[1] - 2*offset)] = [(pos[0], pos[1] - 1*offset), (pos[0], pos[1] - 4*offset)]
+
         return valid_moves
 
     def pawn_valid_tiles(self, pos, threat_mode=False):
@@ -290,6 +326,7 @@ class GameManager():
                 and offset[0] == int((1/2)*plr_offset + 7/2) and self.pos_to_piece(offset).name[1] == "p":
             valid_moves.append((offset[0]+plr_offset, offset[1]))
             self.an_passant_tiles[(offset[0]+plr_offset, offset[1])] = offset
+
         offset = (pos[0], pos[1] - plr_offset)
         if self.check_if_valid_position(offset) and self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset) \
             and self.pos_to_piece(offset).move_count == 1 and self.pos_to_piece(offset) == self.lastly_moved_piece \
