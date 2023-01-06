@@ -8,7 +8,7 @@ class GameState():
     def __init__(self):
         self.board = self.initialize_board()
 
-    def move_piece(self, piece, position):
+    def move_piece(self, piece, position, opponent):
         self.board[piece.position[0]][piece.position[1]] = None
         self.board[position[0]][position[1]] = piece
         piece.set_position((position[0], position[1]))

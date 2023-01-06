@@ -54,12 +54,14 @@ class GameManager():
                     # switch players
                     self.current_player = self.plr_white if self.current_player.color == "b" else self.plr_black
                     self.current_opponent = self.plr_black if self.current_player.color == "b" else self.plr_white
+                    self.plr_black.pieces = self.find_all_pieces_of_color("b")
+                    self.plr_white.pieces = self.find_all_pieces_of_color("w")
 
         # Highlight avaiable moves
         self.currently_valid_moves = self.piece_valid_tiles(self.piece_in_hand) if self.piece_in_hand is not None else []
-        self.highlight_tiles(self.currently_valid_moves)
 
         self.load_pieces()
+        self.highlight_tiles(self.currently_valid_moves)
 
     def pos_to_piece(self, pos):
         """returns piece standing at given position"""
@@ -67,7 +69,7 @@ class GameManager():
 
     def move_piece(self, piece, position):
         """Sends an information to GameState to move a piece"""
-        self.game_state.move_piece(piece, position)
+        self.game_state.move_piece(piece, position, self.current_opponent)
 
     def draw_board(self):
         """Displays board on window"""
@@ -272,7 +274,7 @@ class GameManager():
             valid_moves.append(offset)
         # if first move
         offset = (pos[0]+2*plr_offset, pos[1])
-        if self.check_if_valid_position(offset) and self.pos_to_piece((pos[0], pos[1])).move_count == 0 and not self.check_if_place_occupied(offset) and not threat_mode:
+        if self.check_if_valid_position(offset) and self.pos_to_piece(pos).move_count == 0 and not self.check_if_place_occupied(offset) and not threat_mode:
             valid_moves.append(offset)
         # capture moves
         offset = (pos[0]+plr_offset, pos[1]+plr_offset)
