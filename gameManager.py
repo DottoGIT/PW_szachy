@@ -1,5 +1,5 @@
 """
-This class is responsible for window display, and managing gamestate and moves
+This class is responsible for window display, and player moves
 """
 
 import pygame
@@ -168,13 +168,16 @@ class GameManager():
 
     def rook_valid_tiles(self, pos, threat_mode=False):
         valid_moves = []
+        opponent_color = "b" if self.current_player.color == "w" else "w"
 
         def add_rook_moves(sign_x, sign_y):
             for offset in range(1, 8):
                 offset_pos = (pos[0]+offset*sign_x, pos[1]+offset*sign_y)
                 if self.check_if_valid_position(offset_pos) and not self.is_current_player_piece(offset_pos):
                     valid_moves.append(offset_pos)
-                    if self.check_if_place_occupied(offset_pos):
+                    if threat_mode and self.check_if_place_occupied(offset_pos) and opponent_color + "k":
+                        continue
+                    elif self.check_if_place_occupied(offset_pos):
                         break
                 else:
                     if threat_mode and self.check_if_valid_position(offset_pos):
@@ -216,12 +219,15 @@ class GameManager():
 
     def bishop_valid_tiles(self, pos, threat_mode=False):
         valid_moves = []
+        opponent_color = "b" if self.current_player.color == "w" else "w"
 
         def add_diagonal_moves(offset_x, offset_y):
             for tile in range(1, 8):
                 offset = (pos[0]+tile*offset_x, pos[1]+tile*offset_y)
                 if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset):
                     valid_moves.append(offset)
+                    if threat_mode and self.check_if_place_occupied(offset) and opponent_color + "k":
+                        continue
                     if self.check_if_place_occupied(offset):
                         break
                 else:
@@ -308,10 +314,12 @@ class GameManager():
         offset = (pos[0]+plr_offset, pos[1])
         if self.check_if_valid_position(offset) and not self.check_if_place_occupied(offset) and not threat_mode:
             valid_moves.append(offset)
+
         # if first move
         offset = (pos[0]+2*plr_offset, pos[1])
         if self.check_if_valid_position(offset) and self.pos_to_piece(pos).move_count == 0 and not self.check_if_place_occupied(offset) and not threat_mode:
             valid_moves.append(offset)
+
         # capture moves
         offset = (pos[0]+plr_offset, pos[1]+plr_offset)
         if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)) or threat_mode:
@@ -319,6 +327,7 @@ class GameManager():
         offset = (pos[0]+plr_offset, pos[1]-plr_offset)
         if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)) or threat_mode:
             valid_moves.append(offset)
+
         # en passant
         offset = (pos[0], pos[1] + plr_offset)
         if self.check_if_valid_position(offset) and self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset) \
