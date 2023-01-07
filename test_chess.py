@@ -61,6 +61,10 @@ def test_GameManager_find_pieces_of_color():
     assert len(game.find_all_pieces_of_color("w")) == 16
     assert len(game.find_all_pieces_of_color("b")) == 16
 
+def test_gamestate_duplicate_board():
+    game = GameState()
+    assert game.print_board(game.board) == game.print_board(game.duplicate_board())
+
 # Player Tests
 
 
@@ -75,4 +79,4 @@ def test_Player_initialization_invalid():
     with raises(ValueError):
         Player("asd", [i for i in range(16)])
     with raises(ValueError):
-        Player("w", [i for i in range(2)])
+        Player("", [i for i in range(2)])

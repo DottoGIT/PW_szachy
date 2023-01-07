@@ -7,6 +7,10 @@ from gameState import GameState
 
 
 class GameManager():
+
+    # Debug settings
+    highlight_available_moves = False
+
     def __init__(self, window, board_size, tile_colors):
 
         if window.get_width() < board_size or window.get_height() < board_size:
@@ -20,6 +24,7 @@ class GameManager():
         self.game_state = GameState()
 
         self.piece_in_hand = None
+        self.currently_valid_moves = []
         self.an_passant_tiles = {}
         self.castle_tiles = {}
 
@@ -31,7 +36,7 @@ class GameManager():
             if event.type == pygame.MOUSEBUTTONUP:
                 clicked_tile = self.mouse_pos_to_tile(pygame.mouse.get_pos())
                 # Grabbing a piece
-                if self.piece_in_hand is None or clicked_tile not in self.game_state.piece_valid_tiles(self.piece_in_hand):
+                if self.piece_in_hand is None or clicked_tile not in self.currently_valid_moves:
                     taken_piece = self.game_state.pos_to_piece(clicked_tile)
                     if taken_piece is not None and self.game_state.is_current_player_piece(taken_piece.position):
                         self.piece_in_hand = taken_piece
@@ -41,12 +46,13 @@ class GameManager():
                 else:
                     self.game_state.move_piece(self.piece_in_hand, clicked_tile)
                     self.piece_in_hand = None
+                self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand)
 
-        # Highlight avaiable moves
-        self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand) if self.piece_in_hand is not None else []
 
         self.load_pieces()
-        self.highlight_tiles(self.currently_valid_moves)
+        # Highlight avaiable moves
+        self.highlight_tiles(self.currently_valid_moves, (9, 188, 138))
+        if self.highlight_available_moves: self.highlight_tiles(self.game_state.find_all_possible_moves(), (255,0,0))
 
     def draw_board(self):
         """Displays board on window"""
@@ -54,7 +60,6 @@ class GameManager():
         for row in range(8):
             for column in range(8):
                 cell = pygame.Rect(row*cell_dimension, column*cell_dimension, cell_dimension, cell_dimension)
-                # Draw cell
                 pygame.draw.rect(self.window, self.tile_colors[(row + column) % 2], cell)
 
     def load_pieces(self):
@@ -73,10 +78,10 @@ class GameManager():
         cell_dimension = self.cell_size
         return pos[1] // cell_dimension, pos[0] // cell_dimension
 
-    def highlight_tiles(self, tiles):
+    def highlight_tiles(self, tiles, color):
         """Marks given tiles with a gray circle"""
         if not tiles:
             return
         for tile in tiles:
             target_pos = (tile[1]*self.cell_size + self.cell_size/2, tile[0]*self.cell_size + self.cell_size/2)
-            pygame.draw.circle(self.window, (9, 188, 138), target_pos, self.cell_size/8)
+            pygame.draw.circle(self.window, color, target_pos, self.cell_size/8)

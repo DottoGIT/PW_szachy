@@ -1,21 +1,23 @@
 """
-This class is responsible for keeping current pieces positions and remembering moves
+This class is responsible for keeping current pieces positions, and returning board data
 """
 from piece import Piece
 from player import Player
 
 
 class GameState():
-    def __init__(self, board=None):
+    def __init__(self, board=None, current_player_color="w", is_simulated=False):
+        # set up a new board if optional board is not given
         self.board = self.initialize_board() if not board else board
-
+        # assign players
         self.plr_black = Player("b", self.find_all_pieces_of_color("b"))
         self.plr_white = Player("w", self.find_all_pieces_of_color("w"))
-        self.current_player = self.plr_white
-        self.current_opponent = self.plr_black
-
+        self.current_player = self.plr_white if current_player_color == "w" else self.plr_black
+        self.current_opponent = self.plr_black if current_player_color == "w" else self.plr_white
+        # other important variables 
         self.lastly_moved_piece = None
-
+        self.is_simulated = is_simulated
+        # lists for unusual actions that can occur during piece move
         self.an_passant_tiles = {}
         self.castle_tiles = {}
 
@@ -31,12 +33,43 @@ class GameState():
             [Piece("wr", (7, 0)), Piece("wh", (7, 1)), Piece("wb", (7, 2)), Piece("wq", (7, 3)), Piece("wk", (7, 4)), Piece("wb", (7, 5)), Piece("wh", (7, 6)), Piece("wr", (7, 7))]
         ]
 
+    def duplicate_board(self):
+        """because self.board.copy() doesnt work for some reason"""
+        new_board = []
+        for row in range(8):
+            new_row = []
+            for column in range(8):
+                if self.board[row][column] is not None:
+                    new_row.append(Piece(self.board[row][column].name, (row, column)))
+                else:
+                    new_row.append(None)
+            new_board.append(new_row)
+        return new_board
+
+    def print_board(self, board):
+        end_str = ""
+        for row in range(8):
+            row_str = ""
+            for column in range(8):
+                if board[row][column] is not None:
+                    row_str += "[" + board[row][column].name + "]"
+                else:
+                    row_str += "[  ]"
+            end_str += row_str + "\n"
+        print(end_str)
+                
+
     def move_piece(self, piece, position):
+        """Moves piece from its position to given one"""
+        # Change positions
         self.board[piece.position[0]][piece.position[1]] = None
         self.board[position[0]][position[1]] = piece
         piece.set_position((position[0], position[1]))
 
-        self.check_if_pawn_promotion(position)
+        # Check for pawn promotion
+        promotion_tile = 0 if self.current_player.color == "w" else 7
+        if self.pos_to_piece(position).name[1] == "p" and position[0] == promotion_tile:
+            self.pos_to_piece(position).name = self.current_player.color + "q"
 
         # check if move was an passant
         if position in self.an_passant_tiles:
@@ -45,13 +78,16 @@ class GameState():
 
         # check if move was a castle
         if position in self.castle_tiles:
-            self.move_piece(self.pos_to_piece(self.castle_tiles[position][1]), self.castle_tiles[position][0])
+            self.pos_to_piece(self.castle_tiles[position][1]).set_position(self.castle_tiles[position][0])
+            self.board[self.castle_tiles[position][0][0]][self.castle_tiles[position][0][1]] = self.pos_to_piece(self.castle_tiles[position][1])
+            self.remove_a_piece(self.castle_tiles[position][1])
 
+        # After move variable changes
         self.lastly_moved_piece = piece
 
         # switch players
         self.current_player = self.plr_white if self.current_player.color == "b" else self.plr_black
-        self.current_opponent = self.plr_black if self.current_player.color == "b" else self.plr_white
+        self.current_opponent = self.plr_black if self.current_player.color == "w" else self.plr_white
         # update pieces
         self.plr_black.pieces = self.find_all_pieces_of_color("b")
         self.plr_white.pieces = self.find_all_pieces_of_color("w")
@@ -65,15 +101,10 @@ class GameState():
         self.board[pos[0]][pos[1]] = None
 
     def is_current_player_piece(self, pos):
+        """Checks if piece standing on given position belongs to current player"""
         if not self.pos_to_piece(pos):
             return False
         return self.pos_to_piece(pos) in self.current_player.pieces
-
-    def check_if_pawn_promotion(self, pos):
-        """Promotes a pawn if it goes to the edge of the board"""
-        promotion_tile = 0 if self.current_player.color == "w" else 7
-        if self.pos_to_piece(pos).name[1] == "p" and pos[0] == promotion_tile:
-            self.pos_to_piece(pos).name = self.current_player.color + "q"
 
     def find_all_pieces_of_color(self, color):
         """Finds pieces that belong to white or black player"""
@@ -86,13 +117,42 @@ class GameState():
                     found_pieces.append(self.pos_to_piece((row, column)))
         return found_pieces
 
+    def find_all_possible_moves(self):
+        """return every possible move of every piece of current player"""
+        possible_moves = []
+        for piece in self.current_player.pieces:
+            possible_moves += self.piece_valid_tiles(piece)
+        return possible_moves
+
+    def check_if_king_in_check(self):
+        """Checks if any of current players pieces can capture enemy king"""
+        enemy_king_name = self.current_opponent.color + "k"
+        for tile in self.find_all_possible_moves():
+            if self.pos_to_piece(tile) is not None and self.pos_to_piece(tile).name == enemy_king_name:
+                return True
+        return False
+
+    def simulate_move_is_legal(self, current_player, piece, position):
+        """Function used to make abstract moves to detect if they are legal 
+        (for example, if moving a piece won't casuse a check mate in next move)"""
+        board_copy = self.duplicate_board()
+        simulated_board = GameState(board_copy, current_player.color, True)
+        piece_simulated = simulated_board.pos_to_piece(piece.position)
+        simulated_board.move_piece(piece_simulated, position)
+        if simulated_board.check_if_king_in_check():
+            return False
+        return True
+
+
     def check_if_valid_position(self, pos):
-        """Checks if position exists on board"""
+        """Checks if position exists on a board"""
         return pos[0] >= 0 and pos[1] >= 0 and pos[0] < 8 and pos[1] < 8
 
-    """Next functions return moves avaiable for each piece on given position, threat_mode is used for finding tiles defended by piece"""
+    """Next functions return moves avaiable for each piece on given position"""
 
     def piece_valid_tiles(self, piece):
+        if not piece:
+            return []
         moveset = {
             "r": self.rook_valid_tiles(piece.position),
             "h": self.knight_valid_tiles(piece.position),
@@ -101,7 +161,16 @@ class GameState():
             "k": self.king_valid_tiles(piece.position),
             "p": self.pawn_valid_tiles(piece.position)
         }
-        return moveset[piece.name[1]]
+        # if being in simulation return moveset early to avoid stack overflow
+        if self.is_simulated:
+            return moveset[piece.name[1]]
+
+        # moveset that simulates every possible move to make sure it wont lead to checkmate in next move
+        real_correct_moveset = []
+        for move in moveset[piece.name[1]]:
+            if self.simulate_move_is_legal(self.current_player, piece, move):
+                real_correct_moveset.append(move)
+        return real_correct_moveset
 
     def rook_valid_tiles(self, pos):
         valid_moves = []

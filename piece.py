@@ -27,3 +27,6 @@ class Piece():
         posX = position[0]
         posY = position[1]
         return posX <= 7 and posY <= 7 and posX >= 0 and posY >= 0
+
+    def __str__(self):
+        return self.name
