@@ -44,7 +44,6 @@ class GameManager():
                 # Moving a piece
                 else:
                     self.move_piece(self.piece_in_hand, clicked_tile)
-                    self.currently_defended_tiles = self.find_defended_tiles()
                     self.lastly_moved_piece = self.piece_in_hand
                     self.check_if_pawn_promotion(clicked_tile)
                     self.piece_in_hand = None
@@ -73,7 +72,7 @@ class GameManager():
 
     def move_piece(self, piece, position):
         """Sends an information to GameState to move a piece"""
-        self.game_state.move_piece(piece, position, self.current_opponent)
+        self.game_state.move_piece(piece, position)
 
     def draw_board(self):
         """Displays board on window"""
@@ -146,42 +145,30 @@ class GameManager():
         if self.pos_to_piece(pos).name[1] == "p" and pos[0] == promotion_tile:
             self.pos_to_piece(pos).name = self.current_player.color + "q"
 
-    def find_defended_tiles(self):
-        """checks if any of opponent pieces can move to given tile in next turn"""
-        defended_tiles = []
-        for piece in self.current_player.pieces:
-            defended_tiles += self.piece_valid_tiles(piece, True)
-        return defended_tiles
-
     """Next functions return moves avaiable for each piece on given position, threat_mode is used for finding tiles defended by piece"""
 
-    def piece_valid_tiles(self, piece, threat_mode=False):
+    def piece_valid_tiles(self, piece):
         moveset = {
-            "r": self.rook_valid_tiles(piece.position, threat_mode),
-            "h": self.knight_valid_tiles(piece.position, threat_mode),
-            "b": self.bishop_valid_tiles(piece.position, threat_mode),
-            "q": self.queen_valid_tiles(piece.position, threat_mode),
-            "k": self.king_valid_tiles(piece.position, threat_mode),
-            "p": self.pawn_valid_tiles(piece.position, threat_mode)
+            "r": self.rook_valid_tiles(piece.position),
+            "h": self.knight_valid_tiles(piece.position),
+            "b": self.bishop_valid_tiles(piece.position),
+            "q": self.queen_valid_tiles(piece.position),
+            "k": self.king_valid_tiles(piece.position),
+            "p": self.pawn_valid_tiles(piece.position)
         }
         return moveset[piece.name[1]]
 
-    def rook_valid_tiles(self, pos, threat_mode=False):
+    def rook_valid_tiles(self, pos):
         valid_moves = []
-        opponent_color = "b" if self.current_player.color == "w" else "w"
 
         def add_rook_moves(sign_x, sign_y):
             for offset in range(1, 8):
                 offset_pos = (pos[0]+offset*sign_x, pos[1]+offset*sign_y)
                 if self.check_if_valid_position(offset_pos) and not self.is_current_player_piece(offset_pos):
                     valid_moves.append(offset_pos)
-                    if threat_mode and self.check_if_place_occupied(offset_pos) and opponent_color + "k":
-                        continue
-                    elif self.check_if_place_occupied(offset_pos):
+                    if self.check_if_place_occupied(offset_pos):
                         break
                 else:
-                    if threat_mode and self.check_if_valid_position(offset_pos):
-                        valid_moves.append(offset_pos)
                     break
         # Rook horizontal movement: right
         add_rook_moves(1, 0)
@@ -193,14 +180,12 @@ class GameManager():
         add_rook_moves(0, -1)
         return valid_moves
 
-    def knight_valid_tiles(self, pos, threat_mode=False):
+    def knight_valid_tiles(self, pos):
         valid_moves = []
 
         def add_knight_moves(offset):
             if self.check_if_valid_position(offset) \
                     and not self.is_current_player_piece(offset):
-                valid_moves.append(offset)
-            elif threat_mode and self.check_if_valid_position(offset):
                 valid_moves.append(offset)
 
         # Top right
@@ -217,22 +202,17 @@ class GameManager():
         add_knight_moves((pos[0]-1, pos[1]-2))
         return valid_moves
 
-    def bishop_valid_tiles(self, pos, threat_mode=False):
+    def bishop_valid_tiles(self, pos):
         valid_moves = []
-        opponent_color = "b" if self.current_player.color == "w" else "w"
 
         def add_diagonal_moves(offset_x, offset_y):
             for tile in range(1, 8):
                 offset = (pos[0]+tile*offset_x, pos[1]+tile*offset_y)
                 if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset):
                     valid_moves.append(offset)
-                    if threat_mode and self.check_if_place_occupied(offset) and opponent_color + "k":
-                        continue
                     if self.check_if_place_occupied(offset):
                         break
                 else:
-                    if threat_mode and self.check_if_valid_position(offset):
-                        valid_moves.append(offset)
                     break
 
         # Top right
@@ -246,17 +226,15 @@ class GameManager():
 
         return valid_moves
 
-    def queen_valid_tiles(self, pos, threat_mode=False):
-        return self.rook_valid_tiles(pos, threat_mode) + self.bishop_valid_tiles(pos, threat_mode)
+    def queen_valid_tiles(self, pos):
+        return self.rook_valid_tiles(pos) + self.bishop_valid_tiles(pos)
 
-    def king_valid_tiles(self, pos, threat_mode=False):
+    def king_valid_tiles(self, pos):
         valid_moves = []
 
         def add_if_valid_move(offset_x, offset_y):
             offset = (pos[0] + offset_x, pos[1] + offset_y)
-            if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset) and offset not in self.currently_defended_tiles:
-                valid_moves.append(offset)
-            elif self.check_if_valid_position(offset) and threat_mode:
+            if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset):
                 valid_moves.append(offset)
 
         add_if_valid_move(-1, -1)
@@ -302,7 +280,7 @@ class GameManager():
 
         return valid_moves
 
-    def pawn_valid_tiles(self, pos, threat_mode=False):
+    def pawn_valid_tiles(self, pos):
         valid_moves = []
         plr_offset = 0
         if self.current_player.color == "b":
@@ -312,20 +290,20 @@ class GameManager():
 
         # basic move
         offset = (pos[0]+plr_offset, pos[1])
-        if self.check_if_valid_position(offset) and not self.check_if_place_occupied(offset) and not threat_mode:
+        if self.check_if_valid_position(offset) and not self.check_if_place_occupied(offset):
             valid_moves.append(offset)
 
         # if first move
         offset = (pos[0]+2*plr_offset, pos[1])
-        if self.check_if_valid_position(offset) and self.pos_to_piece(pos).move_count == 0 and not self.check_if_place_occupied(offset) and not threat_mode:
+        if self.check_if_valid_position(offset) and self.pos_to_piece(pos).move_count == 0 and not self.check_if_place_occupied(offset):
             valid_moves.append(offset)
 
         # capture moves
         offset = (pos[0]+plr_offset, pos[1]+plr_offset)
-        if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)) or threat_mode:
+        if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)):
             valid_moves.append(offset)
         offset = (pos[0]+plr_offset, pos[1]-plr_offset)
-        if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)) or threat_mode:
+        if self.check_if_valid_position(offset) and (self.check_if_place_occupied(offset) and not self.is_current_player_piece(offset)):
             valid_moves.append(offset)
 
         # en passant

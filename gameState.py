@@ -5,10 +5,10 @@ from piece import Piece
 
 
 class GameState():
-    def __init__(self):
-        self.board = self.initialize_board()
+    def __init__(self, board=None):
+        self.board = self.initialize_board() if not board else board
 
-    def move_piece(self, piece, position, opponent):
+    def move_piece(self, piece, position):
         self.board[piece.position[0]][piece.position[1]] = None
         self.board[position[0]][position[1]] = piece
         piece.set_position((position[0], position[1]))
