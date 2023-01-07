@@ -2,16 +2,22 @@
 This class is responsible for keeping current pieces positions and remembering moves
 """
 from piece import Piece
+from player import Player
 
 
 class GameState():
     def __init__(self, board=None):
         self.board = self.initialize_board() if not board else board
 
-    def move_piece(self, piece, position):
-        self.board[piece.position[0]][piece.position[1]] = None
-        self.board[position[0]][position[1]] = piece
-        piece.set_position((position[0], position[1]))
+        self.plr_black = Player("b", self.find_all_pieces_of_color("b"))
+        self.plr_white = Player("w", self.find_all_pieces_of_color("w"))
+        self.current_player = self.plr_white
+        self.current_opponent = self.plr_black
+
+        self.lastly_moved_piece = None
+
+        self.an_passant_tiles = {}
+        self.castle_tiles = {}
 
     def initialize_board(self):
         return [
@@ -24,3 +30,241 @@ class GameState():
             [Piece("wp", (6, 0)), Piece("wp", (6, 1)), Piece("wp", (6, 2)), Piece("wp", (6, 3)), Piece("wp", (6, 4)), Piece("wp", (6, 5)), Piece("wp", (6, 6)), Piece("wp", (6, 7))],
             [Piece("wr", (7, 0)), Piece("wh", (7, 1)), Piece("wb", (7, 2)), Piece("wq", (7, 3)), Piece("wk", (7, 4)), Piece("wb", (7, 5)), Piece("wh", (7, 6)), Piece("wr", (7, 7))]
         ]
+
+    def move_piece(self, piece, position):
+        self.board[piece.position[0]][piece.position[1]] = None
+        self.board[position[0]][position[1]] = piece
+        piece.set_position((position[0], position[1]))
+
+        self.check_if_pawn_promotion(position)
+
+        # check if move was an passant
+        if position in self.an_passant_tiles:
+            self.remove_a_piece(self.an_passant_tiles[position])
+            self.an_passant_tiles = {}
+
+        # check if move was a castle
+        if position in self.castle_tiles:
+            self.move_piece(self.pos_to_piece(self.castle_tiles[position][1]), self.castle_tiles[position][0])
+
+        self.lastly_moved_piece = piece
+
+        # switch players
+        self.current_player = self.plr_white if self.current_player.color == "b" else self.plr_black
+        self.current_opponent = self.plr_black if self.current_player.color == "b" else self.plr_white
+        # update pieces
+        self.plr_black.pieces = self.find_all_pieces_of_color("b")
+        self.plr_white.pieces = self.find_all_pieces_of_color("w")
+
+    def pos_to_piece(self, pos):
+        """returns piece standing at given position"""
+        return self.board[pos[0]][pos[1]]
+
+    def remove_a_piece(self, pos):
+        """Empties a position on a board"""
+        self.board[pos[0]][pos[1]] = None
+
+    def is_current_player_piece(self, pos):
+        if not self.pos_to_piece(pos):
+            return False
+        return self.pos_to_piece(pos) in self.current_player.pieces
+
+    def check_if_pawn_promotion(self, pos):
+        """Promotes a pawn if it goes to the edge of the board"""
+        promotion_tile = 0 if self.current_player.color == "w" else 7
+        if self.pos_to_piece(pos).name[1] == "p" and pos[0] == promotion_tile:
+            self.pos_to_piece(pos).name = self.current_player.color + "q"
+
+    def find_all_pieces_of_color(self, color):
+        """Finds pieces that belong to white or black player"""
+        if color not in ["w", "b"]:
+            raise ValueError("Wrong color input")
+        found_pieces = []
+        for row in range(8):
+            for column in range(8):
+                if self.pos_to_piece((row, column)) is not None and self.pos_to_piece((row, column)).get_player() == color:
+                    found_pieces.append(self.pos_to_piece((row, column)))
+        return found_pieces
+
+    def check_if_valid_position(self, pos):
+        """Checks if position exists on board"""
+        return pos[0] >= 0 and pos[1] >= 0 and pos[0] < 8 and pos[1] < 8
+
+    """Next functions return moves avaiable for each piece on given position, threat_mode is used for finding tiles defended by piece"""
+
+    def piece_valid_tiles(self, piece):
+        moveset = {
+            "r": self.rook_valid_tiles(piece.position),
+            "h": self.knight_valid_tiles(piece.position),
+            "b": self.bishop_valid_tiles(piece.position),
+            "q": self.queen_valid_tiles(piece.position),
+            "k": self.king_valid_tiles(piece.position),
+            "p": self.pawn_valid_tiles(piece.position)
+        }
+        return moveset[piece.name[1]]
+
+    def rook_valid_tiles(self, pos):
+        valid_moves = []
+
+        def add_rook_moves(sign_x, sign_y):
+            for offset in range(1, 8):
+                offset_pos = (pos[0]+offset*sign_x, pos[1]+offset*sign_y)
+                if self.check_if_valid_position(offset_pos) and not self.is_current_player_piece(offset_pos):
+                    valid_moves.append(offset_pos)
+                    if self.pos_to_piece(offset_pos) is not None:
+                        break
+                else:
+                    break
+        # Rook horizontal movement: right
+        add_rook_moves(1, 0)
+        # Rook horizontal movement: left
+        add_rook_moves(-1, 0)
+        # Rook vertical movement: up
+        add_rook_moves(0, 1)
+        # Rook vertical movement: down
+        add_rook_moves(0, -1)
+        return valid_moves
+
+    def knight_valid_tiles(self, pos):
+        valid_moves = []
+
+        def add_knight_moves(offset):
+            if self.check_if_valid_position(offset) \
+                    and not self.is_current_player_piece(offset):
+                valid_moves.append(offset)
+
+        # Top right
+        add_knight_moves((pos[0]-2, pos[1]+1))
+        add_knight_moves((pos[0]-1, pos[1]+2))
+        # Bottom right
+        add_knight_moves((pos[0]+2, pos[1]+1))
+        add_knight_moves((pos[0]+1, pos[1]+2))
+        # Bottom left
+        add_knight_moves((pos[0]+2, pos[1]-1))
+        add_knight_moves((pos[0]+1, pos[1]-2))
+        # Top left
+        add_knight_moves((pos[0]-2, pos[1]-1))
+        add_knight_moves((pos[0]-1, pos[1]-2))
+        return valid_moves
+
+    def bishop_valid_tiles(self, pos):
+        valid_moves = []
+
+        def add_diagonal_moves(offset_x, offset_y):
+            for tile in range(1, 8):
+                offset = (pos[0]+tile*offset_x, pos[1]+tile*offset_y)
+                if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset):
+                    valid_moves.append(offset)
+                    if self.pos_to_piece(offset) is not None:
+                        break
+                else:
+                    break
+
+        # Top right
+        add_diagonal_moves(-1, 1)
+        # Bottom right
+        add_diagonal_moves(1, 1)
+        # Bottom left
+        add_diagonal_moves(1, -1)
+        # Top left
+        add_diagonal_moves(-1, -1)
+
+        return valid_moves
+
+    def queen_valid_tiles(self, pos):
+        return self.rook_valid_tiles(pos) + self.bishop_valid_tiles(pos)
+
+    def king_valid_tiles(self, pos):
+        valid_moves = []
+
+        def add_if_valid_move(offset_x, offset_y):
+            offset = (pos[0] + offset_x, pos[1] + offset_y)
+            if self.check_if_valid_position(offset) and not self.is_current_player_piece(offset):
+                valid_moves.append(offset)
+
+        add_if_valid_move(-1, -1)
+        add_if_valid_move(-1, 0)
+        add_if_valid_move(-1, 1)
+        add_if_valid_move(0, -1)
+        add_if_valid_move(0, 1)
+        add_if_valid_move(1, -1)
+        add_if_valid_move(1, 0)
+        add_if_valid_move(1, 1)
+
+        offset = 1 if self.current_player.color == "w" else -1
+
+        # short castle white
+        short_castle_condition = True
+        for i in range(1, 3):
+            if not self.check_if_valid_position((pos[0], pos[1] + i*offset)) or self.pos_to_piece((pos[0], pos[1] + i*offset)) is not None:
+                short_castle_condition = False
+                break
+        r_pos = (pos[0], pos[1] + 3*offset)
+        if not self.check_if_valid_position(r_pos) or not self.pos_to_piece(r_pos) is not None or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
+                or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
+            short_castle_condition = False
+
+        if short_castle_condition:
+            valid_moves.append((pos[0], pos[1] + 2*offset))
+            self.castle_tiles[(pos[0], pos[1] + 2*offset)] = [(pos[0], pos[1] + 1*offset), (pos[0], pos[1] + 3*offset)]
+
+        # long castle white
+        long_castle_condition = True
+        for i in range(1, 4):
+            if not self.check_if_valid_position((pos[0], pos[1] - i*offset)) or self.pos_to_piece((pos[0], pos[1] - i*offset)) is not None:
+                long_castle_condition = False
+                break
+        r_pos = (pos[0], pos[1] - 4*offset)
+        if not self.check_if_valid_position(r_pos) or not self.pos_to_piece(r_pos) is not None or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
+                or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
+            long_castle_condition = False
+
+        if long_castle_condition:
+            valid_moves.append((pos[0], pos[1] - 2*offset))
+            self.castle_tiles[(pos[0], pos[1] - 2*offset)] = [(pos[0], pos[1] - 1*offset), (pos[0], pos[1] - 4*offset)]
+
+        return valid_moves
+
+    def pawn_valid_tiles(self, pos):
+        valid_moves = []
+        plr_offset = 0
+        if self.current_player.color == "b":
+            plr_offset = 1
+        elif self.current_player.color == "w":
+            plr_offset = -1
+
+        # basic move
+        offset = (pos[0]+plr_offset, pos[1])
+        if self.check_if_valid_position(offset) and not self.pos_to_piece(offset) is not None:
+            valid_moves.append(offset)
+
+        # if first move
+        offset = (pos[0]+2*plr_offset, pos[1])
+        if self.check_if_valid_position(offset) and self.pos_to_piece(pos).move_count == 0 and not self.pos_to_piece(offset) is not None:
+            valid_moves.append(offset)
+
+        # capture moves
+        offset = (pos[0]+plr_offset, pos[1]+plr_offset)
+        if self.check_if_valid_position(offset) and (self.pos_to_piece(offset) is not None and not self.is_current_player_piece(offset)):
+            valid_moves.append(offset)
+        offset = (pos[0]+plr_offset, pos[1]-plr_offset)
+        if self.check_if_valid_position(offset) and (self.pos_to_piece(offset) is not None and not self.is_current_player_piece(offset)):
+            valid_moves.append(offset)
+
+        # en passant
+        offset = (pos[0], pos[1] + plr_offset)
+        if self.check_if_valid_position(offset) and self.pos_to_piece(offset) is not None and not self.is_current_player_piece(offset) \
+            and self.pos_to_piece(offset).move_count == 1 and self.pos_to_piece(offset) == self.lastly_moved_piece \
+                and offset[0] == int((1/2)*plr_offset + 7/2) and self.pos_to_piece(offset).name[1] == "p":
+            valid_moves.append((offset[0]+plr_offset, offset[1]))
+            self.an_passant_tiles[(offset[0]+plr_offset, offset[1])] = offset
+
+        offset = (pos[0], pos[1] - plr_offset)
+        if self.check_if_valid_position(offset) and self.pos_to_piece(offset) is not None and not self.is_current_player_piece(offset) \
+            and self.pos_to_piece(offset).move_count == 1 and self.pos_to_piece(offset) == self.lastly_moved_piece \
+                and offset[0] == int((1/2)*plr_offset + 7/2) and self.pos_to_piece(offset).name[1] == "p":
+            valid_moves.append((offset[0]+plr_offset, offset[1]))
+            self.an_passant_tiles[(offset[0]+plr_offset, offset[1])] = offset
+
+        return valid_moves
+

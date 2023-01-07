@@ -27,16 +27,9 @@ def test_GameManager_pos_to_position():
     screen = pygame.display.set_mode((900, 900))
     colors = ("white", "gray")
     game = GameManager(screen, 900, colors)
-    assert game.pos_to_tile((90, 10)) == (0, 0)
-    assert game.pos_to_tile((162, 160)) == (1, 1)
+    assert game.mouse_pos_to_tile((90, 10)) == (0, 0)
+    assert game.mouse_pos_to_tile((162, 160)) == (1, 1)
 
-
-def test_GameManager_find_pieces_of_color():
-    screen = pygame.display.set_mode((900, 900))
-    colors = ("white", "gray")
-    game = GameManager(screen, 900, colors)
-    assert len(game.find_all_pieces_of_color("w")) == 16
-    assert len(game.find_all_pieces_of_color("b")) == 16
 
 
 # Piece Tests
@@ -62,6 +55,11 @@ def test_GameState_initialization():
     game_state = GameState()
     assert game_state.board[0][0].name == "br"
     assert game_state.board[3][1] is None
+
+def test_GameManager_find_pieces_of_color():
+    game = GameState()
+    assert len(game.find_all_pieces_of_color("w")) == 16
+    assert len(game.find_all_pieces_of_color("b")) == 16
 
 # Player Tests
 
