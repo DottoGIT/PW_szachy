@@ -1,9 +1,10 @@
 """
-This class is responsible for window display, and player moves
+This class is responsible for managing classes and player input
 """
 
 import pygame
 from gameState import GameState
+from display import Display
 
 
 class GameManager():
@@ -19,9 +20,9 @@ class GameManager():
         self.window = window
         self.tile_colors = tile_colors
         self.board_size = board_size
-        self.cell_size = self.board_size//8
 
         self.game_state = GameState()
+        self.display = Display(self.window, self.board_size)
 
         self.piece_in_hand = None
         self.currently_valid_moves = []
@@ -30,7 +31,7 @@ class GameManager():
 
     def update(self, events):
         """Game loop"""
-        self.draw_board()
+        self.display.draw_board(self.tile_colors)
         # Wait for player move
         for event in events:
             if event.type == pygame.MOUSEBUTTONUP:
@@ -49,39 +50,13 @@ class GameManager():
                 self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand)
 
 
-        self.load_pieces()
+        self.display.load_pieces(self.game_state)
         # Highlight avaiable moves
-        self.highlight_tiles(self.currently_valid_moves, (9, 188, 138))
-        if self.highlight_available_moves: self.highlight_tiles(self.game_state.find_all_possible_moves(), (255,0,0))
+        self.display.highlight_tiles(self.currently_valid_moves, (9, 188, 138))
+        if self.highlight_available_moves: self.display.highlight_tiles(self.game_state.find_all_possible_moves(), (255,0,0))
 
-    def draw_board(self):
-        """Displays board on window"""
-        cell_dimension = self.cell_size
-        for row in range(8):
-            for column in range(8):
-                cell = pygame.Rect(row*cell_dimension, column*cell_dimension, cell_dimension, cell_dimension)
-                pygame.draw.rect(self.window, self.tile_colors[(row + column) % 2], cell)
-
-    def load_pieces(self):
-        """Loads pieces images on drawn board"""
-        cell_dimension = self.cell_size
-        for row in range(8):
-            for column in range(8):
-                cell = pygame.Rect(row*cell_dimension, column*cell_dimension, cell_dimension, cell_dimension)
-                if self.game_state.pos_to_piece((column, row)) is not None:
-                    img_path = f"pieces/{self.game_state.pos_to_piece((column, row)).name}.png"
-                    img = pygame.transform.scale(pygame.image.load(img_path), (cell_dimension, cell_dimension))
-                    self.window.blit(img, cell)
-
+    
     def mouse_pos_to_tile(self, pos):
         """Takes mouse position and converts it to chess tile coordinates"""
-        cell_dimension = self.cell_size
+        cell_dimension = self.board_size//8
         return pos[1] // cell_dimension, pos[0] // cell_dimension
-
-    def highlight_tiles(self, tiles, color):
-        """Marks given tiles with a gray circle"""
-        if not tiles:
-            return
-        for tile in tiles:
-            target_pos = (tile[1]*self.cell_size + self.cell_size/2, tile[0]*self.cell_size + self.cell_size/2)
-            pygame.draw.circle(self.window, color, target_pos, self.cell_size/8)
