@@ -5,7 +5,7 @@ This file initializes window and starts game loop
 import pygame
 from gameManager import GameManager
 
-WINDOW_WIDTH = 900
+WINDOW_WIDTH = 1200
 WINDOW_HEIGHT = 900
 WINDOW_NAME = "Chess"
 TILE_COLORS = ("white", "gray")
