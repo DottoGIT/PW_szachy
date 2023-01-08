@@ -6,6 +6,7 @@ class Display():
     def __init__(self, window, board_size, game_manager):
         self.window = window
         self.board_size = board_size
+        self.actual_board_size = self.board_size//8 * 8
         self.save_clicked = False
         self.restart_clicked = False
         self.game_manager = game_manager
@@ -38,7 +39,7 @@ class Display():
             target_pos = (tile[1]*cell_dimension + cell_dimension/2, tile[0]*cell_dimension + cell_dimension/2)
             pygame.draw.circle(self.window, color, target_pos, cell_dimension/size)
     
-    def display_game_over_screen(self, who_won, win_type):
+    def display_game_over_screen(self, who_won, win_type, move_tracker):
         """Displays window that shows who won and two buttons - restart - save"""
         border_size = 8
         window_width = self.board_size/3
@@ -69,7 +70,11 @@ class Display():
         save_pos_y = window_pos_y + 130
         save_width = window_width/2.5
         save_height = window_height/3
-        save_img = pygame.transform.scale(pygame.image.load("Buttons/save_btn.png"), (save_width, save_height))
+        if not self.save_clicked:
+            save_img = pygame.transform.scale(pygame.image.load("Buttons/save_btn.png"), (save_width, save_height))
+        else:
+            save_img = pygame.transform.scale(pygame.image.load("Buttons/saved_btn.png"), (save_width, save_height))
+
         save_rect = pygame.Rect(save_pos_x,save_pos_y,save_width,save_height)
         
         # Display everything
@@ -84,13 +89,45 @@ class Display():
         mouse_pos = pygame.mouse.get_pos()
         # Save
         if save_rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not self.save_clicked:
-            print("Click save") 
+            move_tracker.save_move_record()
             self.save_clicked = True
-        elif not pygame.mouse.get_pressed()[0]:
-            self.save_clicked = False
         # Restart
         if res_rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not self.restart_clicked:
+            self.save_clicked = False
             self.game_manager.restart_game()
             self.restart_clicked = True
         elif not pygame.mouse.get_pressed()[0]:
             self.restart_clicked = False
+
+    def show_move_record(self, move_record):
+        # Draw move board
+        move_board = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, self.actual_board_size - 200)
+        current_move_tile = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, 50)
+        move_board_line_1 = pygame.Rect(self.actual_board_size + 75, 0, 5, self.actual_board_size - 200)
+        move_board_line_2 = pygame.Rect(self.actual_board_size + 190, 0, 5, self.actual_board_size - 200)
+        pygame.draw.rect(self.window, (76,76,71), move_board)
+        pygame.draw.rect(self.window, (120,120,115), current_move_tile)
+        pygame.draw.rect(self.window, (50,50,45), move_board_line_1)
+        pygame.draw.rect(self.window, (50,50,45), move_board_line_2)
+        move_font = pygame.font.SysFont("arialblack",25)
+        num_font = pygame.font.SysFont("arialblack",40)
+        hash = num_font.render("#", True, (255, 255, 255))
+        players = move_font.render("white     black", True, (255, 255, 255))
+        self.window.blit(hash, (self.actual_board_size + 23, -6))
+        self.window.blit(players, (self.actual_board_size + 95, 7))
+
+        
+        def draw_move_cell(pos_y, m_number, m_white, m_black):
+            num = num_font.render(m_number, True, (255, 255, 255))
+            white = move_font.render(m_white, True, (255, 255, 255))
+            black = move_font.render(m_black, True, (255, 255, 255))
+            self.window.blit(num, (self.actual_board_size + 7, pos_y - 7))
+            self.window.blit(white, (self.actual_board_size + 85, pos_y + 7))
+            self.window.blit(black, (self.actual_board_size + 200, pos_y + 7))
+        
+        index = 1
+        for move in move_record[::-1]:
+            draw_move_cell(index * 50, str((len(move_record)+1) - index) + ".", move["w"], move["b"])
+            index += 1
+            if index > 13:
+                break

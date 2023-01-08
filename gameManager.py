@@ -5,13 +5,13 @@ This class is responsible for managing classes and player input
 import pygame
 from gameState import GameState
 from display import Display
+from movesTracker import MovesTracker
 
 
 class GameManager():
 
     # Debug settings
     highlight_available_moves = False
-    highlight_checks = True
 
     def __init__(self, window, board_size, tile_colors):
 
@@ -25,8 +25,9 @@ class GameManager():
         self.init_new_game()
 
     def init_new_game(self):
-        self.game_state = GameState()
         self.display = Display(self.window, self.board_size, self)
+        self.move_tracker = MovesTracker()
+        self.game_state = GameState(move_tracker=self.move_tracker)
         self.piece_in_hand = None
         self.is_player_in_check = (False, None)
         self.game_over_data = {"is_over": False, "winner": "", "end_type": ""}
@@ -61,30 +62,42 @@ class GameManager():
                     # Check if game over
                     if len(self.game_state.find_all_player_moves()) == 0:
                         if self.is_player_in_check[0]:
+                            # Checkmate
                             self.game_over_data["is_over"] = True
                             self.game_over_data["winner"] = "Black won" if self.game_state.current_player.color == "w" else "White won"
                             self.game_over_data["end_type"] = "Checkmate"
                         else:
+                            # Stalemate
                             self.game_over_data["is_over"] = True
                             self.game_over_data["winner"] = "Draw"
                             self.game_over_data["end_type"] = "Stalemate"
                     elif not self.game_state.can_opponent_mate() and not self.game_state.can_player_mate():
+                            # Not enough material
                             self.game_over_data["is_over"] = True
                             self.game_over_data["winner"] = "Draw"
                             self.game_over_data["end_type"] = "Not enough mate material"
 
                 self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand)
 
-
-        if self.highlight_checks and self.is_player_in_check: self.display.highlight_tiles(self.is_player_in_check[1], (255,0,0),2) 
+        # Highlight checks
+        if self.is_player_in_check: 
+            self.display.highlight_tiles(self.is_player_in_check[1], (255,0,0),2) 
+        
+        # Display pieces on board
         self.display.load_pieces(self.game_state)
+        
         # Highlight avaiable moves
         self.display.highlight_tiles(self.currently_valid_moves, (9, 188, 138))
+
+        # Highligh every move if debug option is set to True
         if self.highlight_available_moves: self.display.highlight_tiles(self.game_state.find_all_player_moves(), (255,0,0))
+        
         # Display game over screen if needed
         if self.game_over_data["is_over"]:
-            self.display.display_game_over_screen(self.game_over_data["winner"], self.game_over_data["end_type"])
+            self.display.display_game_over_screen(self.game_over_data["winner"], self.game_over_data["end_type"], self.move_tracker)
 
+        # Display move record
+        self.display.show_move_record(self.move_tracker.move_record)
 
     def mouse_pos_to_tile(self, pos):
         """Takes mouse position and converts it to chess tile coordinates"""

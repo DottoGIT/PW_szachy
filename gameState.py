@@ -6,9 +6,10 @@ from player import Player
 
 
 class GameState():
-    def __init__(self, board=None, current_player_color="w", is_simulated=False):
+    def __init__(self, board=None, current_player_color="w", move_tracker=None, is_simulated=False):
         # set up a new board if optional board is not given
         self.board = self.initialize_board() if not board else board
+        self.move_tracker = move_tracker
         # assign players
         self.plr_black = Player("b", self.find_all_pieces_of_color("b"))
         self.plr_white = Player("w", self.find_all_pieces_of_color("w"))
@@ -86,6 +87,9 @@ class GameState():
 
     def move_piece(self, piece, position):
         """Moves piece from its position to given one"""
+        # Saves move to tracker if it exists
+        if self.move_tracker:
+            self.move_tracker.record_move(piece,position,self.current_player.color)
         # Change positions
         self.board[piece.position[0]][piece.position[1]] = None
         self.board[position[0]][position[1]] = piece
@@ -168,7 +172,7 @@ class GameState():
     def find_all_opponent_moves(self):
         """return every possible move of every piece of current opponent"""
         board_copy = self.duplicate_board()
-        simulated_board = GameState(board_copy, self.current_opponent.color, True)
+        simulated_board = GameState(board_copy, self.current_opponent.color, is_simulated=True)
         return simulated_board.find_all_player_moves()
 
 
@@ -194,7 +198,7 @@ class GameState():
         """Function used to make abstract moves to detect if they are legal 
         (for example, if moving a piece won't casuse a check mate in next move)"""
         board_copy = self.duplicate_board()
-        simulated_board = GameState(board_copy, current_player.color, True)
+        simulated_board = GameState(board_copy, current_player.color, is_simulated=True)
         piece_simulated = simulated_board.pos_to_piece(piece.position)
         simulated_board.move_piece(piece_simulated, position)
         if simulated_board.check_if_opponent_in_check():
@@ -318,37 +322,35 @@ class GameState():
         add_if_valid_move(1, 0)
         add_if_valid_move(1, 1)
 
-        offset = 1 if self.current_player.color == "w" else -1
-
-        # short castle white
+        # short castle
         short_castle_condition = True
         for i in range(1, 3):
-            if not self.check_if_valid_position((pos[0], pos[1] + i*offset)) or self.pos_to_piece((pos[0], pos[1] + i*offset)) is not None:
+            if not self.check_if_valid_position((pos[0], pos[1] + i)) or self.pos_to_piece((pos[0], pos[1] + i)) is not None:
                 short_castle_condition = False
                 break
-        r_pos = (pos[0], pos[1] + 3*offset)
+        r_pos = (pos[0], pos[1] + 3)
         if not self.check_if_valid_position(r_pos) or not self.pos_to_piece(r_pos) is not None or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
                 or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
             short_castle_condition = False
 
         if short_castle_condition:
-            valid_moves.append((pos[0], pos[1] + 2*offset))
-            self.castle_tiles[(pos[0], pos[1] + 2*offset)] = [(pos[0], pos[1] + 1*offset), (pos[0], pos[1] + 3*offset)]
+            valid_moves.append((pos[0], pos[1] + 2))
+            self.castle_tiles[(pos[0], pos[1] + 2)] = [(pos[0], pos[1] + 1), (pos[0], pos[1] + 3)]
 
-        # long castle white
+        # long castle
         long_castle_condition = True
         for i in range(1, 4):
-            if not self.check_if_valid_position((pos[0], pos[1] - i*offset)) or self.pos_to_piece((pos[0], pos[1] - i*offset)) is not None:
+            if not self.check_if_valid_position((pos[0], pos[1] - i)) or self.pos_to_piece((pos[0], pos[1] - i)) is not None:
                 long_castle_condition = False
                 break
-        r_pos = (pos[0], pos[1] - 4*offset)
+        r_pos = (pos[0], pos[1] - 4)
         if not self.check_if_valid_position(r_pos) or not self.pos_to_piece(r_pos) is not None or not self.pos_to_piece(r_pos).name == self.current_player.color + "r" \
                 or self.pos_to_piece(r_pos).move_count != 0 or self.pos_to_piece(pos).move_count != 0:
             long_castle_condition = False
 
         if long_castle_condition:
-            valid_moves.append((pos[0], pos[1] - 2*offset))
-            self.castle_tiles[(pos[0], pos[1] - 2*offset)] = [(pos[0], pos[1] - 1*offset), (pos[0], pos[1] - 4*offset)]
+            valid_moves.append((pos[0], pos[1] - 2))
+            self.castle_tiles[(pos[0], pos[1] - 2)] = [(pos[0], pos[1] - 1), (pos[0], pos[1] - 4)]
 
         return valid_moves
 
