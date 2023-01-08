@@ -101,10 +101,10 @@ class Display():
 
     def show_move_record(self, move_record):
         # Draw move board
-        move_board = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, self.actual_board_size - 200)
+        move_board = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, self.actual_board_size - 150)
         current_move_tile = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, 50)
-        move_board_line_1 = pygame.Rect(self.actual_board_size + 75, 0, 5, self.actual_board_size - 200)
-        move_board_line_2 = pygame.Rect(self.actual_board_size + 190, 0, 5, self.actual_board_size - 200)
+        move_board_line_1 = pygame.Rect(self.actual_board_size + 75, 0, 5, self.actual_board_size - 150)
+        move_board_line_2 = pygame.Rect(self.actual_board_size + 190, 0, 5, self.actual_board_size - 150)
         pygame.draw.rect(self.window, (76,76,71), move_board)
         pygame.draw.rect(self.window, (120,120,115), current_move_tile)
         pygame.draw.rect(self.window, (50,50,45), move_board_line_1)
@@ -129,5 +129,33 @@ class Display():
         for move in move_record[::-1]:
             draw_move_cell(index * 50, str((len(move_record)+1) - index) + ".", move["w"], move["b"])
             index += 1
-            if index > 13:
+            if index > 14:
                 break
+
+    def show_player_score(self, white_score, black_score):
+        # Lines
+        score_board = pygame.Rect(self.actual_board_size, self.actual_board_size - 150, self.window.get_width() - self.actual_board_size, 150)
+        score_board_line1 = pygame.Rect(self.actual_board_size, self.actual_board_size - 78, self.window.get_width() - self.actual_board_size, 5)
+        score_board_line2 = pygame.Rect(self.actual_board_size, self.actual_board_size - 150, self.window.get_width() - self.actual_board_size, 5)
+        score_board_line3 = pygame.Rect(self.actual_board_size, self.actual_board_size - 5, self.window.get_width() - self.actual_board_size, 5)
+        score_board_line4 = pygame.Rect(self.actual_board_size, self.actual_board_size - 150, 5, 150)
+        score_board_line5 = pygame.Rect(self.window.get_width()-5, self.actual_board_size - 150, 5, 150)
+        # Text
+        name_font = pygame.font.SysFont("arialblack",35)
+        score_font = pygame.font.SysFont("arialblack",40)
+        name_white = name_font.render("White: ", True, (255, 255, 255))
+        name_black = name_font.render("Black: ", True, (255, 255, 255))
+        score_white = score_font.render(white_score, True, (255, 255, 255))
+        score_black = score_font.render(black_score, True, (255, 255, 255))
+
+        # Display everything
+        pygame.draw.rect(self.window, (45, 45, 42), score_board)
+        pygame.draw.rect(self.window, (0, 0, 0), score_board_line1)
+        pygame.draw.rect(self.window, (0, 0, 0), score_board_line2)
+        pygame.draw.rect(self.window, (0, 0, 0), score_board_line3)
+        pygame.draw.rect(self.window, (0, 0, 0), score_board_line4)
+        pygame.draw.rect(self.window, (0, 0, 0), score_board_line5)
+        self.window.blit(name_white, (self.actual_board_size + 15, self.actual_board_size - 140))
+        self.window.blit(score_white, (self.actual_board_size + 210, self.actual_board_size - 145))
+        self.window.blit(name_black, (self.actual_board_size + 15, self.actual_board_size - 68))
+        self.window.blit(score_black, (self.actual_board_size + 210, self.actual_board_size - 73))

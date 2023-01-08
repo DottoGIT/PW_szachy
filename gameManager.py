@@ -99,6 +99,16 @@ class GameManager():
         # Display move record
         self.display.show_move_record(self.move_tracker.move_record)
 
+        # Display player score
+        score_diff_white = self.game_state.plr_white.get_score() - self.game_state.plr_black.get_score()
+        if score_diff_white > 0:
+            self.display.show_player_score("+" + str(score_diff_white), "")
+        elif score_diff_white < 0:
+            self.display.show_player_score("", "+" + str(-score_diff_white))
+        else:
+            self.display.show_player_score("", "")
+
+
     def mouse_pos_to_tile(self, pos):
         """Takes mouse position and converts it to chess tile coordinates"""
         cell_dimension = self.board_size//8
