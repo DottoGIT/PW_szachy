@@ -21,6 +21,7 @@ class GameManager():
         self.init_new_game()
 
     def init_new_game(self):
+        """ Restarts every important variable setting up a new game """
         self.display = Display(self.window, self.board_size, self)
         self.move_tracker = MovesTracker()
         self.game_state = GameState(move_tracker=self.move_tracker)
@@ -32,7 +33,7 @@ class GameManager():
         self.castle_tiles = {}
 
     def update(self, events):
-        """Game loop"""
+        """ Game loop """
         self.display.draw_board(self.tile_colors)
         # Wait for player move
         for event in events:
@@ -48,6 +49,7 @@ class GameManager():
                 # Moving a piece
                 else:
                     self.game_state.move_piece(self.piece_in_hand, clicked_tile)
+                    self.move_tracker.record_board(self.game_state)
                     self.piece_in_hand = None
                     # Check if under check
                     if self.game_state.check_if_player_in_check():
@@ -55,6 +57,11 @@ class GameManager():
                     else:
                         self.is_player_in_check = (False, None)
                     # Check if game over
+                    # Move repetition
+                    if self.check_for_move_repetition():
+                        self.game_over_data["is_over"] = True
+                        self.game_over_data["winner"] = "Draw"
+                        self.game_over_data["end_type"] = "Move repetition"
                     if len(self.game_state.find_all_player_moves()) == 0:
                         if self.is_player_in_check[0]:
                             # Checkmate
@@ -72,6 +79,7 @@ class GameManager():
                         self.game_over_data["winner"] = "Draw"
                         self.game_over_data["end_type"] = "Not enough mate material"
 
+                # Update valid moves to highlight
                 self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand)
 
         # Highlight checks
@@ -105,6 +113,17 @@ class GameManager():
             self.display.show_player_score("", "")
 
     def mouse_pos_to_tile(self, pos):
-        """Takes mouse position and converts it to chess tile coordinates"""
+        """ Takes mouse position and converts it to chess tile coordinates """
         cell_dimension = self.board_size//8
         return pos[1] // cell_dimension, pos[0] // cell_dimension
+
+    def check_for_move_repetition(self):
+        """ Checks if tracker contains 3 same board positions """
+        if len(self.move_tracker.board_positions_recorded) < 3:
+            return False
+        board_dict = {}
+        for board in self.move_tracker.board_positions_recorded:
+            board_dict[board] = board_dict.get(board, 0) + 1
+            if board_dict[board] >= 3:
+                return True
+        return False

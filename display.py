@@ -1,4 +1,4 @@
-"""This class is responsible for drawing and loading images into main window"""
+"""This class is responsible for drawing and loading images into the main window"""
 
 import pygame
 
@@ -32,16 +32,16 @@ class Display():
                     self.window.blit(img, cell)
 
     def highlight_tiles(self, tiles, color, size=8):
-        """Marks given tiles with a gray circle"""
+        """Marks given tiles with a circle"""
         cell_dimension = self.board_size//8
         if not tiles:
             return
         for tile in tiles:
             target_pos = (tile[1]*cell_dimension + cell_dimension/2, tile[0]*cell_dimension + cell_dimension/2)
             pygame.draw.circle(self.window, color, target_pos, cell_dimension/size)
- 
+
     def display_game_over_screen(self, who_won, win_type, move_tracker):
-        """Displays window that shows who won and two buttons - restart - save"""
+        """Displays window that shows who won and two buttons: restart and save"""
         border_size = 8
         window_width = self.board_size/3
         window_height = self.board_size/4 - 20
@@ -101,7 +101,7 @@ class Display():
             self.restart_clicked = False
 
     def show_move_record(self, move_record):
-        # Draw move board
+        # Draws move board
         move_board = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, self.actual_board_size - 150)
         current_move_tile = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, 50)
         move_board_line_1 = pygame.Rect(self.actual_board_size + 75, 0, 5, self.actual_board_size - 150)
@@ -133,6 +133,7 @@ class Display():
                 break
 
     def show_player_score(self, white_score, black_score):
+        """ Draws player scores at bottom right corner of the window"""
         # Lines
         score_board = pygame.Rect(self.actual_board_size, self.actual_board_size - 150, self.window.get_width() - self.actual_board_size, 150)
         score_board_line1 = pygame.Rect(self.actual_board_size, self.actual_board_size - 78, self.window.get_width() - self.actual_board_size, 5)

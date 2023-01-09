@@ -42,6 +42,17 @@ def test_GameManager_restart_game():
     game.init_new_game()
     assert game.game_state.pos_to_piece((2, 0)) is None
 
+
+def test_GameManager_move_repetition():
+    screen = pygame.display.set_mode((900, 900))
+    colors = ("white", "gray")
+    game = GameManager(screen, 900, colors)
+    assert game.check_for_move_repetition() is False
+    game.move_tracker.record_board(game.game_state)
+    game.move_tracker.record_board(game.game_state)
+    game.move_tracker.record_board(game.game_state)
+    assert game.check_for_move_repetition() is True
+
 # Piece Tests
 
 
@@ -133,7 +144,7 @@ def test_GameState_move_piece():
 
 def test_GameState_duplicate_board():
     game = GameState()
-    assert game.print_board(game.board) == game.print_board(game.duplicate_board())
+    assert game.board_to_str(game.board) == game.board_to_str(game.duplicate_board())
 
 
 def test_GameState_pos_to_piece():
@@ -167,6 +178,8 @@ def test_GameState_find_all_pieces_of_color():
     game = GameState()
     assert len(game.find_all_pieces_of_color("w")) == 16
     assert len(game.find_all_pieces_of_color("b")) == 16
+    with raises(ValueError):
+        game.find_all_pieces_of_color("g")
 
 
 def test_GameState_find_all_moves():
@@ -257,6 +270,15 @@ def test_MoveTracker_pos_to_string():
     assert tracker.pos_to_string((0, 7)) == "H8"
     assert tracker.pos_to_string((7, 0)) == "A1"
     assert tracker.pos_to_string((7, 7)) == "H1"
+
+
+def test_MoveTracker_boards_record():
+    game = GameState()
+    tracker = MovesTracker()
+    assert len(tracker.board_positions_recorded) == 0
+    tracker.record_board(game)
+    assert len(tracker.board_positions_recorded) == 1
+    assert tracker.board_positions_recorded[0] == game.board_to_str(game.board)
 
 # Display Tests
 

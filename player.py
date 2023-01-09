@@ -11,6 +11,7 @@ class Player():
         self.pieces = pieces
 
     def get_score(self):
+        """ sums up every value of every piece player has (Rook: 5 Knight: 3 Bishop: 3 Queen: 9 Pawn: 1)"""
         score = 0
         for piece in self.pieces:
             if piece.name[1] in ["h", "b"]:

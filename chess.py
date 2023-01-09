@@ -1,5 +1,5 @@
 """
-This file initializes window and starts game loop
+This file initializes main window and launches the game
 """
 
 import pygame
@@ -13,10 +13,13 @@ BOARD_SIZE = 900
 
 
 def main():
+    # Window initialization
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption(WINDOW_NAME)
+
     game = GameManager(screen, BOARD_SIZE, TILE_COLORS)
+    # Main Loop
     while True:
         events = pygame.event.get()
         for event in events:
