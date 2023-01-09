@@ -18,7 +18,6 @@ class GameManager():
         self.window = window
         self.tile_colors = tile_colors
         self.board_size = board_size
-        
         self.init_new_game()
 
     def init_new_game(self):
@@ -31,7 +30,6 @@ class GameManager():
         self.currently_valid_moves = []
         self.an_passant_tiles = {}
         self.castle_tiles = {}
-
 
     def update(self, events):
         """Game loop"""
@@ -69,26 +67,27 @@ class GameManager():
                             self.game_over_data["winner"] = "Draw"
                             self.game_over_data["end_type"] = "Stalemate"
                     elif not self.game_state.can_opponent_mate() and not self.game_state.can_player_mate():
-                            # Not enough material
-                            self.game_over_data["is_over"] = True
-                            self.game_over_data["winner"] = "Draw"
-                            self.game_over_data["end_type"] = "Not enough mate material"
+                        # Not enough material
+                        self.game_over_data["is_over"] = True
+                        self.game_over_data["winner"] = "Draw"
+                        self.game_over_data["end_type"] = "Not enough mate material"
 
                 self.currently_valid_moves = self.game_state.piece_valid_tiles(self.piece_in_hand)
 
         # Highlight checks
-        if self.is_player_in_check: 
-            self.display.highlight_tiles(self.is_player_in_check[1], (255,0,0),2) 
-        
+        if self.is_player_in_check:
+            self.display.highlight_tiles(self.is_player_in_check[1], (255, 0, 0), 2)
+
         # Display pieces on board
         self.display.load_pieces(self.game_state)
-        
+
         # Highlight avaiable moves
         self.display.highlight_tiles(self.currently_valid_moves, (9, 188, 138))
 
         # Highligh every move if debug option is set to True
-        if self.highlight_available_moves: self.display.highlight_tiles(self.game_state.find_all_player_moves(), (255,0,0))
-        
+        if self.highlight_available_moves:
+            self.display.highlight_tiles(self.game_state.find_all_player_moves(), (255, 0, 0))
+
         # Display game over screen if needed
         if self.game_over_data["is_over"]:
             self.display.display_game_over_screen(self.game_over_data["winner"], self.game_over_data["end_type"], self.move_tracker)
@@ -104,7 +103,6 @@ class GameManager():
             self.display.show_player_score("", "+" + str(-score_diff_white))
         else:
             self.display.show_player_score("", "")
-
 
     def mouse_pos_to_tile(self, pos):
         """Takes mouse position and converts it to chess tile coordinates"""

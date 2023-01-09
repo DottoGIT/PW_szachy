@@ -15,7 +15,7 @@ class GameState():
         self.plr_white = Player("w", self.find_all_pieces_of_color("w"))
         self.current_player = self.plr_white if current_player_color == "w" else self.plr_black
         self.current_opponent = self.plr_black if current_player_color == "w" else self.plr_white
-        # other important variables 
+        # other important variables
         self.lastly_moved_piece = None
         self.is_simulated = is_simulated
         # lists for unusual actions that can occur during piece move
@@ -58,7 +58,7 @@ class GameState():
                     row_str += "[  ]"
             end_str += row_str + "\n"
         print(end_str)
-                
+
     def can_player_mate(self):
         """Checks if player has enough material to mate opponent"""
         pieces_count = len(self.current_player.pieces)
@@ -89,7 +89,7 @@ class GameState():
         """Moves piece from its position to given one"""
         # Saves move to tracker if it exists
         if self.move_tracker:
-            self.move_tracker.record_move(piece,position,self.current_player.color)
+            self.move_tracker.record_move(piece, position, self.current_player.color)
         # Change positions
         self.board[piece.position[0]][piece.position[1]] = None
         self.board[position[0]][position[1]] = piece
@@ -150,7 +150,6 @@ class GameState():
                 player_king = piece.position
         return (player_king, enemy_king)
 
-
     def find_all_pieces_of_color(self, color):
         """Finds pieces that belong to white or black player"""
         if color not in ["w", "b"]:
@@ -175,7 +174,6 @@ class GameState():
         simulated_board = GameState(board_copy, self.current_opponent.color, is_simulated=True)
         return simulated_board.find_all_player_moves()
 
-
     def check_if_opponent_in_check(self):
         """Checks if any of current players pieces can capture enemy king"""
         enemy_king_name = self.current_opponent.color + "k"
@@ -193,7 +191,7 @@ class GameState():
         return False
 
     def simulate_move_is_legal(self, current_player, piece, position):
-        """Function used to make abstract moves to detect if they are legal 
+        """Function used to make abstract moves to detect if they are legal
         (for example, if moving a piece won't casuse a check mate in next move)"""
         board_copy = self.duplicate_board()
         simulated_board = GameState(board_copy, current_player.color, is_simulated=True)
@@ -202,7 +200,6 @@ class GameState():
         if simulated_board.check_if_opponent_in_check():
             return False
         return True
-
 
     def check_if_valid_position(self, pos):
         """Checks if position exists on a board"""
@@ -394,4 +391,3 @@ class GameState():
             self.an_passant_tiles[(offset[0]+plr_offset, offset[1])] = offset
 
         return valid_moves
-
