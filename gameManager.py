@@ -9,15 +9,12 @@ from movesTracker import MovesTracker
 
 
 class GameManager():
-
     # Debug settings
     highlight_available_moves = False
 
     def __init__(self, window, board_size, tile_colors):
-
         if window.get_width() < board_size or window.get_height() < board_size:
             raise ValueError("window is to small to contain board")
-
         self.window = window
         self.tile_colors = tile_colors
         self.board_size = board_size
@@ -113,6 +110,3 @@ class GameManager():
         """Takes mouse position and converts it to chess tile coordinates"""
         cell_dimension = self.board_size//8
         return pos[1] // cell_dimension, pos[0] // cell_dimension
-
-    def restart_game(self):
-        self.init_new_game()

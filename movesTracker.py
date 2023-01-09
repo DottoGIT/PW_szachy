@@ -28,6 +28,6 @@ class MovesTracker():
             file.write("Num \t | White \t | Black\n")
             index = 1
             for move in self.move_record:
-                file.write(f"{index}.\t\t | {move['w']} \t | {move['b']}\n")
+                file.write(f"{index}.\t | {move['w']} \t | {move['b']}\n")
                 index += 1
         

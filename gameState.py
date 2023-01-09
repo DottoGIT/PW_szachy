@@ -192,8 +192,6 @@ class GameState():
                 return True
         return False
 
-
-
     def simulate_move_is_legal(self, current_player, piece, position):
         """Function used to make abstract moves to detect if they are legal 
         (for example, if moving a piece won't casuse a check mate in next move)"""

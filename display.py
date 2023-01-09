@@ -94,7 +94,7 @@ class Display():
         # Restart
         if res_rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not self.restart_clicked:
             self.save_clicked = False
-            self.game_manager.restart_game()
+            self.game_manager.init_new_game()
             self.restart_clicked = True
         elif not pygame.mouse.get_pressed()[0]:
             self.restart_clicked = False
