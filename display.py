@@ -1,19 +1,18 @@
-"""This class is responsible for drawing and loading images into the main window"""
-
 import pygame
 
 
 class Display():
-    def __init__(self, window, board_size, game_manager):
+    """ This class is responsible for drawing and loading images into the main window """
+
+    def __init__(self, window, board_size):
         self.window = window
         self.board_size = board_size
         self.actual_board_size = self.board_size//8 * 8
         self.save_clicked = False
         self.restart_clicked = False
-        self.game_manager = game_manager
 
     def draw_board(self, tile_colors):
-        """Displays board on window"""
+        """ Displays board on window """
         cell_dimension = self.board_size//8
         for row in range(8):
             for column in range(8):
@@ -21,7 +20,7 @@ class Display():
                 pygame.draw.rect(self.window, tile_colors[(row + column) % 2], cell)
 
     def load_pieces(self, game_state):
-        """Loads pieces images on drawn board"""
+        """ Loads pieces images on drawn board """
         cell_dimension = self.board_size//8
         for row in range(8):
             for column in range(8):
@@ -32,7 +31,7 @@ class Display():
                     self.window.blit(img, cell)
 
     def highlight_tiles(self, tiles, color, size=8):
-        """Marks given tiles with a circle"""
+        """ Marks given tiles with a circle """
         cell_dimension = self.board_size//8
         if not tiles:
             return
@@ -40,8 +39,8 @@ class Display():
             target_pos = (tile[1]*cell_dimension + cell_dimension/2, tile[0]*cell_dimension + cell_dimension/2)
             pygame.draw.circle(self.window, color, target_pos, cell_dimension/size)
 
-    def display_game_over_screen(self, who_won, win_type, move_tracker):
-        """Displays window that shows who won and two buttons: restart and save"""
+    def display_game_over_screen(self, who_won, win_type, game_manager):
+        """ Displays window that shows who won and two buttons: restart and save """
         border_size = 8
         window_width = self.board_size/3
         window_height = self.board_size/4 - 20
@@ -90,17 +89,18 @@ class Display():
         mouse_pos = pygame.mouse.get_pos()
         # Save
         if save_rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not self.save_clicked:
-            move_tracker.save_move_record()
+            game_manager.move_tracker.save_move_record()
             self.save_clicked = True
         # Restart
         if res_rect.collidepoint(mouse_pos) and pygame.mouse.get_pressed()[0] and not self.restart_clicked:
             self.save_clicked = False
-            self.game_manager.init_new_game()
+            game_manager.init_new_game()
             self.restart_clicked = True
         elif not pygame.mouse.get_pressed()[0]:
             self.restart_clicked = False
 
     def show_move_record(self, move_record):
+        """ Displays recorded moves on right edge of the window """
         # Draws move board
         move_board = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, self.actual_board_size - 150)
         current_move_tile = pygame.Rect(self.actual_board_size, 0, self.window.get_width() - self.actual_board_size, 50)

@@ -17,6 +17,7 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
     pygame.display.set_caption(WINDOW_NAME)
+    clock = pygame.time.Clock()
 
     game = GameManager(screen, BOARD_SIZE, TILE_COLORS)
     # Main Loop
@@ -28,6 +29,7 @@ def main():
                 exit()
         game.update(events)
         pygame.display.update()
+        clock.tick(60)
 
 
 if __name__ == "__main__":

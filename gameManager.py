@@ -1,7 +1,3 @@
-"""
-This class is responsible for managing classes and player input
-"""
-
 import pygame
 from gameState import GameState
 from display import Display
@@ -9,6 +5,7 @@ from movesTracker import MovesTracker
 
 
 class GameManager():
+    """ This class is responsible for managing other classes and player input """
     # Debug settings
     highlight_available_moves = False
 
@@ -22,7 +19,7 @@ class GameManager():
 
     def init_new_game(self):
         """ Restarts every important variable setting up a new game """
-        self.display = Display(self.window, self.board_size, self)
+        self.display = Display(self.window, self.board_size)
         self.move_tracker = MovesTracker()
         self.game_state = GameState(move_tracker=self.move_tracker)
         self.piece_in_hand = None
@@ -98,7 +95,7 @@ class GameManager():
 
         # Display game over screen if needed
         if self.game_over_data["is_over"]:
-            self.display.display_game_over_screen(self.game_over_data["winner"], self.game_over_data["end_type"], self.move_tracker)
+            self.display.display_game_over_screen(self.game_over_data["winner"], self.game_over_data["end_type"], self)
 
         # Display move record
         self.display.show_move_record(self.move_tracker.move_record)

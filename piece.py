@@ -1,9 +1,6 @@
-"""
-This class holds every piece information and the way it moves
-"""
-
-
 class Piece():
+    """ This class holds basic   piece information """
+    
     def __init__(self, name, position):
         if len(name) != 2 or name[0] not in ["w", "b"] or name[1] not in ["r", "h", "b", "q", "k", "p"]:
             raise ValueError("Incorrect piece name")

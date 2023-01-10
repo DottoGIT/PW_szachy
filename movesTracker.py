@@ -1,9 +1,9 @@
-""" This class is responsible for remembering moves done by players and saving them to text file """
-
 from datetime import datetime
 
 
 class MovesTracker():
+    """ This class is responsible for remembering moves done by players and saving them to text file """
+    
     def __init__(self):
         self.move_record = []
         self.board_positions_recorded = []

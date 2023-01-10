@@ -1,9 +1,6 @@
-"""
-This class contains information about player score, color and pieces that he has
-"""
-
-
 class Player():
+    """ This class contains information about player score, color and pieces that he has """
+
     def __init__(self, color, pieces):
         if color not in ["b", "w"]:
             raise ValueError("Player color can only be set to 'b' or 'w'")

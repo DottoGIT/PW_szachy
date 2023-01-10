@@ -285,9 +285,6 @@ def test_MoveTracker_boards_record():
 
 def test_Display_initialization():
     screen = pygame.display.set_mode((900, 900))
-    colors = ("white", "gray")
-    game = GameManager(screen, 900, colors)
-    display = Display(screen, 900, game)
+    display = Display(screen, 900)
     assert display.window == screen
     assert display.board_size == 900
-    assert display.game_manager == game

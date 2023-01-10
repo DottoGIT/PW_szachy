@@ -1,11 +1,10 @@
-"""
-This class is responsible for keeping current pieces positions, and returning board data
-"""
 from piece import Piece
 from player import Player
 
 
 class GameState():
+    """ This class is responsible for keeping current pieces positions, and returning board data """
+
     def __init__(self, board=None, current_player_color="w", move_tracker=None, is_simulated=False):
         # set up a new board if optional board is not given
         self.board = self.initialize_board() if not board else board
